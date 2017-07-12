@@ -124,12 +124,15 @@ void loop() {
     lightOn=true;
 
     // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/html");
-    client.println("");
-    delay(1);
-    Serial.println("Client disonnected");
-    Serial.println("");
+//    client.println("HTTP/1.1 200 OK");
+//    client.println("Content-Type: text/html");
+//    client.println("");
+//    delay(1);
+//    Serial.println("Client disonnected");
+//    Serial.println("");
+
+    // [CHECK THIS]???
+    successResponse(client);
   }
   
   if(request.indexOf("/BULB=OFF") != -1)
@@ -139,12 +142,25 @@ void loop() {
 
     
     // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
+//    client.println("HTTP/1.1 200 OK");
+//    client.println("Content-Type: text/html");
+//    client.println("");
+//    delay(1);
+//    Serial.println("Client disonnected");
+//    Serial.println("");
+
+    // [CHECK THIS]???
+    successResponse(client);
+  }
+ 
+}
+
+void successResponse(WiFiClient client){
+    // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/html");
     client.println("");
     delay(1);
     Serial.println("Client disonnected");
     Serial.println("");
-  }
- 
 }

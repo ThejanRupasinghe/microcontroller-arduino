@@ -8,7 +8,7 @@ const char* ssid = "Thejan";
 const char* password = "thejan9453";
 
 // NETWORK: Static IP details...
-IPAddress ip(192, 168, 43, 74); 
+IPAddress ip(192, 168, 43, 244); 
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
@@ -18,6 +18,8 @@ IPAddress subnet(255, 255, 255, 0);
 
 int ledPin = 13;    // indicator led - D7
 int recvPin = 2;   // ir receiver pin - D4
+int sendPin = 14;  // ir sender pin - D5
+int successPin = 4; // ir receieved successfully - D2 
 
 /////////////////////////////////////////////////////
 
@@ -29,20 +31,20 @@ decode_results results;
 
 // DEFINING MODES
 ///////////////////////////////////////////////////
-
-boolean learningMode = false;
-boolean controlMode = false;
-boolean onOffMode = false;
-boolean tempUpMode = false;
-boolean tempDownMode = false;
-
-//////////////////////////////////////////////////
+                                                //
+boolean learningMode = false;                  //
+boolean controlMode = false;                  //
+boolean onOffMode = false;                   //
+boolean tempUpMode = false;                 //
+boolean tempDownMode = false;              //
+                                          //
+///////////////////////////////////////////
 
 
 // DEFINING 3 VARIABLES TO STORE 3 IR CODES
 /////////////////////////////////////////////////
 
-DEFINE HERE
+//DEFINE HERE
 
 ////////////////////////////////////////////////
 
@@ -56,8 +58,10 @@ void setup() {
 
   // SETTTING PIN MODES AND WRITING LOW
   pinMode(ledPin, OUTPUT);
+  pinMode(successPin, OUTPUT);
 
   digitalWrite(ledPin, LOW);
+  digitalWrite(successPin, LOW);
 
 
  // SERIAL PRINT ABOUT WIFI DETAILS
@@ -96,6 +100,7 @@ void setup() {
   Serial.print(WiFi.localIP());
   Serial.println("/");
 
+  irrecv.enableIRIn(); // Start the receiver
   // INDICATOR ON FOR SUCCESSFUL STEUP
   digitalWrite(ledPin,HIGH);
   
@@ -117,20 +122,21 @@ void loop() {
   WiFiClient client = server.available();
   if (!client) 
   {  
-    return;
+    //return;
   }
   
   // WAIT UNTILL CLIENT SENDS A REQUEST
   Serial.println("new client");
-  while(!client.available())
-  {
-    delay(1);
-  }
+//  while(!client.available())
+//  {
+//    delay(1);
+//  }
   
   // READING AND SERIAL PRINTING THE FIRST LINE OF THE REQUEST
   String request = client.readStringUntil('\r');
   Serial.println(request);
   client.flush();
+
 
   // COMPARING THE REQUEST
   if(request.indexOf("/LEARN=ON") != -1)  
@@ -139,16 +145,8 @@ void loop() {
     controlMode = false;
 
     Serial.println("Learning Mode ON");
-
-    irrecv.enableIRIn(); // Start the receiver
     
-    // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/html");
-    client.println("");
-    delay(1);
-    Serial.println("Client disonnected");
-    Serial.println("");
+    successResponse(client);
   }
 
   if(request.indexOf("/CONTROL=ON") != -1)  
@@ -158,19 +156,16 @@ void loop() {
 
     Serial.println("Controlling Mode ON");
 
-    // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/html");
-    client.println("");
-    delay(1);
-    Serial.println("Client disonnected");
-    Serial.println("");
+    successResponse(client);
   }
 
   
   // IF LEARNING MODE IS ON
-  if(learningMode)
+  if(true)
   {
+
+    Serial.println("Learning Mode ON");
+    delay(500);
 
     // TURNING ON DIFFERENT MODES BASED ON SELECTED BUTTON IN ANDROID APP
     if(request.indexOf("/Mode=ONOFF") != -1)  {
@@ -180,13 +175,7 @@ void loop() {
 
       Serial.println("Learning Mode ON, ONOFF Mode ON");
 
-      // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-      client.println("HTTP/1.1 200 OK");
-      client.println("Content-Type: text/html");
-      client.println("");
-      delay(1);
-      Serial.println("Client disonnected");
-      Serial.println("");
+      successResponse(client);
  
     } else if(request.indexOf("/Mode=TEMPUP") != -1)  {
       onOffMode = false;
@@ -195,13 +184,7 @@ void loop() {
 
       Serial.println("Learning Mode ON, TEMPUP Mode ON");      
 
-      // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-      client.println("HTTP/1.1 200 OK");
-      client.println("Content-Type: text/html");
-      client.println("");
-      delay(1);
-      Serial.println("Client disonnected");
-      Serial.println("");
+      successResponse(client);
   
     } else if(request.indexOf("/Mode=TEMPDOWN") != -1)  {
       onOffMode = false;
@@ -209,43 +192,25 @@ void loop() {
       tempDownMode = true;
 
       Serial.println("Learning Mode ON, TEMPDOWN Mode ON");
-      
-      // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-      client.println("HTTP/1.1 200 OK");
-      client.println("Content-Type: text/html");
-      client.println("");
-      delay(1);
-      Serial.println("Client disonnected");
-      Serial.println("");
-  
+
+      successResponse(client);  
     }
 
 
-    if(onOffMode){
+    if(true){
 
+      Serial.println("ONOFF Mode ON");
+      delay(500);
       //assign the raw bits values to onOff bits variables
 
+      String jsonMessage = "";
       // THIS CAN BE USED AS A REFERENCE CODE
       if (irrecv.decode(&results)) {
-        Serial.println(results.value, HEX);
-  
-        decode_results *results_ptr = &results;
-  
-        int count = results_ptr->rawlen;
-        
-        for (int i = 1; i < count; i++) {
-          if (i & 1) {
-            Serial.print(results_ptr->rawbuf[i]*USECPERTICK, DEC);
-          }
-          else {
-            Serial.write('-');
-            Serial.print((unsigned long) results_ptr->rawbuf[i]*USECPERTICK, DEC);
-          }
-          Serial.print(" ");
-        }
-        
-        irrecv.resume(); // Receive the next value
+
+        jsonMessage = readIR();
+
       }
+      
       delay(100);
       ///////////////////////////////////////
 
@@ -253,6 +218,8 @@ void loop() {
       if(request.indexOf("/Save=ONOFF") != -1)  {
           
           // send the bits in onOff bits variables to the mobile app (to be saved in SQLite database) as the response
+
+          sendJsonResponse(client, jsonMessage);
 
       }
       
@@ -278,14 +245,7 @@ void loop() {
       
     }
     
-    
-    // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/html");
-    client.println("");
-    delay(1);
-    Serial.println("Client disonnected");
-    Serial.println("");   
+    successResponse(client);   
     
   }
 
@@ -298,18 +258,61 @@ void loop() {
     {
 
       Serial.println("in control mode");
-      
-      // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-      client.println("HTTP/1.1 200 OK");
-      client.println("Content-Type: text/html");
-      client.println("");
-      delay(1);
-      Serial.println("Client disonnected");
-      Serial.println("");
-    }
-    
-    
-  }
 
-  
+      successResponse(client);
+    }
+       
+  }
+    
 }
+
+void successResponse(WiFiClient client){
+    // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: text/html");
+    client.println("");
+    delay(1);
+    Serial.println("Client disonnected");
+    Serial.println("");
+}
+
+void sendJsonResponse(WiFiClient client, String message){
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: application/json");
+    client.println(message);
+    delay(1);
+    Serial.println("IR code sent");
+    Serial.println("");
+}
+
+String readIR(){
+    digitalWrite(successPin, LOW);       
+  
+    decode_results *results_ptr = &results;
+
+    int count = results_ptr->rawlen;
+
+    String jsonMessage = "{\"irCode\":[";
+    for (int i = 1; i < count-1; i++) {
+      Serial.print((unsigned long) results_ptr->rawbuf[i]*USECPERTICK, DEC);
+      jsonMessage+=(unsigned long) results_ptr->rawbuf[i]*USECPERTICK;
+      jsonMessage+=",";
+      Serial.print(" ");
+    }
+
+    jsonMessage+=(unsigned long) results_ptr->rawbuf[count-1]*USECPERTICK;
+    jsonMessage+="]}";
+
+    Serial.println();
+    Serial.println(jsonMessage);
+    
+    irrecv.resume(); // Receive the next value
+
+    Serial.println("Value loaded. IR resumed");
+
+    delay(200);
+    digitalWrite(successPin, HIGH);
+
+    return jsonMessage;
+}
+

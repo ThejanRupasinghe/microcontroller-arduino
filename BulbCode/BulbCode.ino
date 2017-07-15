@@ -9,7 +9,7 @@ IPAddress ip(192, 168, 43, 76);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
- // d7
+ // DEFINING WIFI SERVER IN NODE MCU BOARD
 WiFiServer server(80);
 
 // PIN NUMBER DEFINING
@@ -21,16 +21,6 @@ int ledPin = 13;    // indicator led - D7
 /////////////////////////////////////////////////////
 
 
-
-// LIGHT ON BOOLEAN. INITIALLY FALSES
-////////////////////////////////////////////////////
-
-boolean lightOn=false;
-
-/////////////////////////////////////////////////////
-
-
- 
 void setup() {
 
   // START SERIAL MONITORING
@@ -45,7 +35,6 @@ void setup() {
   digitalWrite(bulbPin, LOW);
   digitalWrite(ledPin, LOW);
   
- 
   // SERIAL PRINT ABOUT WIFI DETAILS
   Serial.println();
   
@@ -121,35 +110,16 @@ void loop() {
   if(request.indexOf("/BULB=ON") != -1)  
   {
     digitalWrite(bulbPin, HIGH);
-    lightOn=true;
 
-    // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-//    client.println("HTTP/1.1 200 OK");
-//    client.println("Content-Type: text/html");
-//    client.println("");
-//    delay(1);
-//    Serial.println("Client disonnected");
-//    Serial.println("");
-
-    // [CHECK THIS]???
+    // SENDS A SUCCESS RESPONSE TO THE ANDROID APP
     successResponse(client);
   }
   
   if(request.indexOf("/BULB=OFF") != -1)
   {
     digitalWrite(bulbPin, LOW);
-    lightOn=false;
 
-    
-    // SENDING THE CLIENT A EMPTY STRING RESPONSE ON SUCCESSFUL EXECUTION
-//    client.println("HTTP/1.1 200 OK");
-//    client.println("Content-Type: text/html");
-//    client.println("");
-//    delay(1);
-//    Serial.println("Client disonnected");
-//    Serial.println("");
-
-    // [CHECK THIS]???
+    // SENDS A SUCCESS RESPONSE TO THE ANDROID APP
     successResponse(client);
   }
  

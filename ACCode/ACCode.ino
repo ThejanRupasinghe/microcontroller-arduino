@@ -45,6 +45,8 @@ boolean tempDownMode = false;              //
 /////////////////////////////////////////////////
 
 //DEFINE HERE
+      String jsonMessage = "";
+//      String[] ac
 
 ////////////////////////////////////////////////
 
@@ -133,8 +135,18 @@ void loop() {
 //  }
   
   // READING AND SERIAL PRINTING THE FIRST LINE OF THE REQUEST
-  String request = client.readStringUntil('\r');
+  String request = client.readStringUntil('\n');
+  String request2 = client.readStringUntil('\n');
+  String request3 = client.readStringUntil('\n');
+  String request4 = client.readStringUntil('\n');
+  String request5 = client.readStringUntil('\n');
+  String request6 = client.readStringUntil('\n');
   Serial.println(request);
+  Serial.println(request2);
+  Serial.println(request3);
+  Serial.println(request4);
+  Serial.println(request5);
+  Serial.println(request6);
   client.flush();
 
 
@@ -203,7 +215,7 @@ void loop() {
       delay(500);
       //assign the raw bits values to onOff bits variables
 
-      String jsonMessage = "";
+
       // THIS CAN BE USED AS A REFERENCE CODE
       if (irrecv.decode(&results)) {
 
@@ -218,8 +230,9 @@ void loop() {
       if(request.indexOf("/Save=ONOFF") != -1)  {
           
           // send the bits in onOff bits variables to the mobile app (to be saved in SQLite database) as the response
+          
 
-          sendJsonResponse(client, jsonMessage);
+          //sendJsonResponse(client, jsonMessage);
 
       }
       
@@ -258,6 +271,7 @@ void loop() {
     {
 
       Serial.println("in control mode");
+      Serial.println();
 
       successResponse(client);
     }
@@ -278,11 +292,12 @@ void successResponse(WiFiClient client){
 
 void sendJsonResponse(WiFiClient client, String message){
     client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: application/json");
+    client.println("Content-Type: text/html");
+    client.println("");
     client.println(message);
     delay(1);
     Serial.println("IR code sent");
-    Serial.println("");
+    Serial.println("message" + message);
 }
 
 String readIR(){
@@ -292,16 +307,16 @@ String readIR(){
 
     int count = results_ptr->rawlen;
 
-    String jsonMessage = "{\"irCode\":[";
+    String jsonMessage = "|";
     for (int i = 1; i < count-1; i++) {
       Serial.print((unsigned long) results_ptr->rawbuf[i]*USECPERTICK, DEC);
-      jsonMessage+=(unsigned long) results_ptr->rawbuf[i]*USECPERTICK;
+      jsonMessage+=(String)((unsigned long) results_ptr->rawbuf[i]*USECPERTICK);
       jsonMessage+=",";
       Serial.print(" ");
     }
 
-    jsonMessage+=(unsigned long) results_ptr->rawbuf[count-1]*USECPERTICK;
-    jsonMessage+="]}";
+    jsonMessage+=(String)((unsigned long) results_ptr->rawbuf[count-1]*USECPERTICK);
+    jsonMessage+="|";
 
     Serial.println();
     Serial.println(jsonMessage);
